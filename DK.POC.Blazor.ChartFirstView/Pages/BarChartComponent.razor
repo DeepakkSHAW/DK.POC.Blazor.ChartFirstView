@@ -10,13 +10,17 @@
 @using ChartJs.Blazor.Util
 
 <h1>Bar Chart</h1>
-
+<a class="btn btn-outline-primary" @onclick="@(async () => await ChartRedraw())">Refresh with my Data</a>
 <ChartJsBarChart @ref="_barChartJs" Config="@_config" Width="600" Height="300" />
 
 @code {
     private BarConfig _config;
     private ChartJsBarChart _barChartJs;
-
+    private List<string> initial_backgroundColors = new List<string> { ColorUtil.ColorString(200, 90, 100, 0.2f), ColorUtil.ColorString(0, 190, 100, 0.2f), ColorUtil.ColorString(255, 99, 132, 0.2f), ColorUtil.ColorString(54, 162, 235, 0.2f), ColorUtil.ColorString(255, 206, 86, 0.2f), ColorUtil.ColorString(75, 192, 192, 0.2f), ColorUtil.ColorString(153, 102, 255, 0.2f), ColorUtil.ColorString(255, 159, 64, 0.2f) };
+    private List<string> initial_borderColors = new List<string> { ColorUtil.ColorString(200, 90, 100, 1f), ColorUtil.ColorString(0, 190, 100, 1f), ColorUtil.ColorString(255, 99, 132, 1f), ColorUtil.ColorString(54, 162, 235, 1f), ColorUtil.ColorString(255, 206, 86, 1f), ColorUtil.ColorString(75, 192, 192, 1f), ColorUtil.ColorString(153, 102, 255, 1f), ColorUtil.ColorString(255, 159, 64, 1f) };
+    private List<string> backgroundColors = new List<string>();
+    private List<string> borderColors = new List<string>();
+    private string[] Labels;
     protected override void OnInitialized()
     {
         _config = new BarConfig
@@ -26,40 +30,44 @@
                 Title = new OptionsTitle
                 {
                     Display = true,
-                    Text = "Sample chart from Blazor"
+                    Text = "DK Chart.Js exploration on Blazor"
                 },
+
                 Scales = new BarScales
                 {
                     XAxes = new List<CartesianAxis>
-            {
+        {
                         new BarTimeAxis
                         {
-                            BarPercentage = 0.75,
+                            BarPercentage = 1,
+                            OffsetGridLines = true,
                             Time = new TimeOptions
                             {
-                                Unit = TimeMeasurement.Hour
+                                Unit = TimeMeasurement.Day
                             },
-                            Offset = true
+                            Offset = true,
                         }
                 },
                     YAxes = new List<CartesianAxis>
-        {
+    {
                         new BarLinearCartesianAxis
                         {
                             Ticks = new LinearCartesianTicks
                             {
-                                BeginAtZero = true
+                                BeginAtZero = true,
+                                AutoSkip = true
                             }
                         }
                     }
                 },
-                Responsive = true
+                Responsive = false,
             }
         };
 
         var barSet = new BarDataset<TimeTuple<double>>
         {
             Label = "My time-double dataset",
+            
             BackgroundColor = new[] { ColorUtil.RandomColorString(), ColorUtil.RandomColorString(), ColorUtil.RandomColorString(), ColorUtil.RandomColorString() },
             BorderWidth = 1,
             HoverBackgroundColor = ColorUtil.ColorString(0, 0, 0, 0.1),
@@ -72,5 +80,37 @@
         var rnd = new Random();
         barSet.AddRange(Enumerable.Range(2, 4).Select(i => new TimeTuple<double>((Moment)now.AddHours(i), rnd.NextDouble() * 4)));
         _config.Data.Datasets.Add(barSet);
+    }
+    private async Task ChartRedraw()
+    {
+        var barSet = new BarDataset<TimeTuple<double>>
+        {
+            Label = "Don's show me",
+            Hidden = true,
+            BackgroundColor = initial_backgroundColors.ToArray(),
+            BorderColor = initial_borderColors.ToArray(),
+            BorderWidth = 2,
+            HoverBackgroundColor = initial_borderColors.ToArray(),
+            HoverBorderColor = "#000000", //initial_backgroundColors.ToArray(),
+            HoverBorderWidth = 1,
+            
+        };
+        Labels = new string[] {"# A","B","C","D" };
+        var listCharData = new List<TimeTuple<double>>();
+
+        listCharData.Add(new TimeTuple<double>((Moment)DateTime.Now.AddMonths(1), 55.5));
+        listCharData.Add(new TimeTuple<double>((Moment)DateTime.Now.AddMonths(2), 59.5));
+        listCharData.Add(new TimeTuple<double>((Moment)DateTime.Now.AddMonths(6), 90.5));
+        listCharData.Add(new TimeTuple<double>((Moment)DateTime.Now.AddMonths(4), 120.95));
+        listCharData.Add(new TimeTuple<double>((Moment)DateTime.Now.AddMonths(5), -20));
+
+        barSet.AddRange(listCharData);
+
+        _config.Data.Datasets.Clear();
+        _config.Data.Datasets.Add(barSet);
+        _config.Data.Labels.Clear();
+        //_config.Data.Labels.AddRange(Labels);
+        
+        await _barChartJs.Update();
     }
 }
